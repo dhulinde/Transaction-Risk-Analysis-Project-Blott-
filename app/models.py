@@ -1,0 +1,73 @@
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict
+
+#Json 
+"""  { 
+"transaction_id": "tx_12345abcde", 
+"timestamp": "2025-05-07T14:30:45Z", 
+"amount": 129.99, 
+"currency": "USD", 
+"customer": { 
+"id": "cust_98765zyxwv", 
+"country": "US", 
+"ip_address": "192.168.1.1" 
+}, 
+"payment_method": { 
+"type": "credit_card", 
+"last_four": "4242", 
+"country_of_issue": "CA" 
+}, 
+"merchant": { 
+"id": "merch_abcde12345", 
+"name": "Example Store", 
+"category": "electronics" 
+} 
+}
+"""
+
+class Transaction(BaseModel):
+    transaction_id: str 
+    timestamp: str 
+    amount: float 
+    currency: str
+    customer : 'Customer'
+    payment_method : 'PaymentMethod'   
+    merchant : 'Merchant'
+
+#json for customer
+""" "customer": { 
+"id": "cust_98765zyxwv", 
+"country": "US", 
+"ip_address": "192.168.1.1" 
+}, """
+
+class Customer(BaseModel):
+    id: int
+    country: str 
+    ip_address: str
+
+#json for payment method
+""" 
+"payment_method": { 
+"type": "credit_card", 
+"last_four": "4242", 
+"country_of_issue": "CA" 
+}, 
+"""
+
+class PaymentMethod(BaseModel):
+    type: str 
+    last_four: str 
+    country_of_issue: str 
+
+#json for merchant
+""" "merchant": { 
+"id": "merch_abcde12345", 
+"name": "Example Store", 
+"category": "electronics" 
+} """
+
+class Merchant(BaseModel):
+    id: str 
+    name: str 
+    category: str
