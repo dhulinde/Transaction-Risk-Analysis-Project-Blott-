@@ -42,7 +42,7 @@ class Transaction(BaseModel):
 }, """
 
 class Customer(BaseModel):
-    id: int
+    id: str
     country: str 
     ip_address: str
 
@@ -71,3 +71,18 @@ class Merchant(BaseModel):
     id: str 
     name: str 
     category: str
+
+#json for risk analysis
+"""
+{ 
+"risk_score": 0.0-1.0, 
+"risk_factors": ["factor1", "factor2"...], 
+"reasoning": "A brief explanation of your analysis", 
+"recommended_action": "allow|review|block"
+}
+"""
+class RiskAnalysis(BaseModel):
+    risk_score: float
+    risk_factors: List[str]
+    reasoning: str
+    recommended_action: str
