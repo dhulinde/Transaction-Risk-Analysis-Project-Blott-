@@ -1,27 +1,3 @@
-# from app.llm.base import LLM
-# from app.models import Transaction, RiskAnalysis
-# from app.llm.openai_llm import OpenAILLM
-# from app.llm.claude_llm import ClaudeLLM
-# from app.config import settings
-
-
-# llm_provider = {
-#     "openai": OpenAILLM(),
-#     "claude": ClaudeLLM(),
-#     #add other LLM providers here once implemented
-# }
-
-# async def analyze_transaction(transaction: Transaction, llm_name: str) -> RiskAnalysis:
-#     llm_name = llm_name.lower()
-#     if llm_name not in llm_provider:
-#         raise ValueError(f"LLM provider '{llm_name}' is not supported.")
-    
-#     llm = llm_provider[llm_name]
-#     risk_analysis = await llm.analyze_transaction(transaction)
-    
-#     return risk_analysis
-
-
 from app.llm.base import LLM
 from app.models import Transaction, RiskAnalysis
 from app.llm.openai_llm import OpenAILLM

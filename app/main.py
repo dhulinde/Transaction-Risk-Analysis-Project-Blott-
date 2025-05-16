@@ -4,7 +4,7 @@ from pydantic import BaseModel, ValidationError
 from app.config import settings
 from app.models import Transaction, RiskAnalysis
 from app.business_logic.risk_analyzer import analyze_transaction
-from app.business_logic.api_notifier import notify_admin_api
+from app.business_logic.api_notifier import notify_api
 from app.utils.auth import verify_credentials
 
 
@@ -16,8 +16,15 @@ security = HTTPBasic()
 
 @app.post("/webhook/transaction")
 async def transaction_webhook(
-    request: Request
+    request: Request,
+    credentials: HTTPBasicCredentials = Depends(security)
 ):
+    if not verify_credentials(credentials):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
     
     try:
         data = await request.json()
@@ -37,7 +44,7 @@ async def transaction_webhook(
     
     #Nofifies admin api if theres a high risk score
     if analysis.risk_score >= 0.7:
-        await notify_admin_api(transaction, analysis)
+        await notify_api(transaction, analysis)
 
     #add email notification to admin code here
 

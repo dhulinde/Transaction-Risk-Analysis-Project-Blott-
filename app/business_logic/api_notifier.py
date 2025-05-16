@@ -1,6 +1,6 @@
 import httpx
-from models import Transaction, RiskAnalysis
-from config import settings
+from app.models import Transaction, RiskAnalysis
+from app.config import settings
 
 async def notify_api(transaction: Transaction, risk_analysis: RiskAnalysis):
     message = {
