@@ -17,4 +17,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
 
+    auth_username = "Testuser"
+    auth_password = "Random321"
+
 settings = Settings()
