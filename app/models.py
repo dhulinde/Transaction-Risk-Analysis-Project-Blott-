@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from pydantic import BaseModel
+from typing import List
+
 
 #Json 
 """  { 
@@ -81,8 +82,38 @@ class Merchant(BaseModel):
 "recommended_action": "allow|review|block"
 }
 """
+
 class RiskAnalysis(BaseModel):
     risk_score: float
     risk_factors: List[str]
     reasoning: str
     recommended_action: str
+
+#json for admin notification
+"""
+ { 
+"alert_type": "high_risk_transaction", 
+"transaction_id": "tx_12345abcde", 
+"risk_score": 0.85, 
+"risk_factors": [ 
+"Customer country (US) differs from card country (CA)", 
+"Transaction amount significantly higher than customer 
+average", 
+"Multiple transactions within short timeframe" 
+], 
+"transaction_details": { 
+// The original transaction JSON 
+}, 
+"llm_analysis": "This transaction shows multiple risk 
+indicators including cross-border payment method, unusual amount 
+for this customer, and velocity pattern concerns." 
+} 
+"""
+
+class AdminNotification(BaseModel):
+    alert_type: str
+    transaction_id: str
+    risk_score: float
+    risk_factors: List[str]
+    transaction_details: dict
+    llm_analysis: str
