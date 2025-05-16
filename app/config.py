@@ -10,10 +10,15 @@ class Settings(BaseSettings):
     #Anthropic API settings
     anthropic_api_key: str 
     anthropic_api_url: str = "https://api.anthropic.com/v1/messages"
+
+    # Groq API settings
+    groq_api_key: str
+    groq_api_url: str = "https://api.groq.com/openai/v1/chat/completions"
     
     # Default LLM provider
     #llm_provider: str = "openai" #or "claude" if the default is Claude
-    llm_provider: str = "claude" #or "claude" if the default is Claude 
+    #llm_provider: str = "claude" #or "openai" if the default is OpenAI 
+    llm_provider: str = "groq" 
     
     class Config:
         env_file = ".env"
