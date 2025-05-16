@@ -2,6 +2,7 @@ from app.llm.base import LLM
 from app.models import Transaction, RiskAnalysis
 from app.llm.openai_llm import OpenAILLM
 from app.llm.claude_llm import ClaudeLLM
+from app.llm.groq_llm import GroqLLM 
 from app.config import settings
 import logging
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 llm_provider = {
     "openai": OpenAILLM(),
     "claude": ClaudeLLM(),
+    "groq": GroqLLM(),  # Uncomment when GroqLLM is implemented
     # Add other LLM providers here once implemented
 }
 
