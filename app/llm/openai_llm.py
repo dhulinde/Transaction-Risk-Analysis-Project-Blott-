@@ -8,7 +8,7 @@ from app.models import Transaction, RiskAnalysis
 
 class OpenAILLM(LLM):
     model_name: str = "gpt-3.5-turbo"
-    max_tokens: int = 1000  # Default max tokens (For testing purposes)
+    max_tokens: int = 2000  # Default max tokens (For testing purposes)
     
 
     async def analyze_transaction(self, transaction: Transaction) -> RiskAnalysis:
@@ -26,6 +26,7 @@ class OpenAILLM(LLM):
 
         start_time = time.time()
 
+        #Error handling for 429 errors (This displays the error message and retries, allows to identify the direct issue)
         for attempt in range(3):
             async with httpx.AsyncClient() as client:
                 response = await client.post(settings.openai_api_url, headers=headers, json=data)
@@ -68,47 +69,27 @@ class OpenAILLM(LLM):
     def _build_prompt(self, transaction: Transaction) -> str:
         transaction_json = transaction.model_dump_json(indent=2)
         return f"""
-# Transaction Risk Analysis Prompt
+You are a financial-fraud analyst.
 
-## System Instructions
-You are a specialised financial risk analyst. Your task is to evaluate transaction data and determine a risk score from 0.0 (no risk) to 1.0 (extremely high risk) based on patterns and indicators of potential fraud. You must also provide clear reasoning for your risk assessment.
+Return **only** this JSON, no markdown, no extra keys:
 
-## Response Format
-Respond ONLY with a valid JSON object in the following structure. Do NOT include markdown, backticks, or explanations — just the pure JSON. You must include all fields, even if they are empty or null.
-You MUST include ALL of the following keys: 
-- "risk_score"
-- "risk_factors"
-- "reasoning" (This should be a brief explanation of your analysis) AND IT MUST BE PRESENT
-- "recommended_action"
+{{
+  "risk_score": 0.0-1.0,          // float
+  "risk_factors": ["…"],          // list of short strings
+  "reasoning": "…",               // ≤ 40 words
+  "recommended_action": "allow" | "review" | "block"
+}}
 
-## Risk Factors to Consider
+Assess risk using:
+• Geographic mismatch (customer ↔ card ↔ IP, high-risk country list)
+• Pattern anomalies (amount, time-of-day, velocity)
+• Payment-method risk
+• Merchant reputation / category
 
-1. **Geographic Anomalies**
-   - Customer country differs from payment method country
-   - Transactions from high-risk countries (weak AML controls)
-   - IP address location inconsistent with customer country
+Guidelines  
+0.0-0.3 → allow 0.3-0.7 → review 0.7-1.0 → block
 
-2. **Transaction Patterns**
-   - Unusual amount for the merchant category
-   - Transactions outside business hours
-   - Rapid repeat transactions
-
-3. **Payment Method Indicators**
-   - Risky payment method types
-   - Recently added payment methods
-
-4. **Merchant Factors**
-   - Merchant category with high fraud rates
-   - Poor merchant history or reputation
-
-## Additional Guidelines
-- Combine multiple factors to increase risk
-- Higher amounts = higher scrutiny
-- Account for common cross-border activity
-- Provide actionable reasoning behind the score
-- Use thresholds: allow (0.0–0.3), review (0.3–0.7), block (0.7–1.0)
-
-## Transaction Data
+Transaction:
 {transaction_json}
 
 """
