@@ -1,3 +1,6 @@
+#implementation of Claude LLM using the Anthropic API
+#However, the code is not tested yet as the Anthropic API key wasnt available during the time of production
+
 import httpx
 import json
 import time
@@ -35,7 +38,7 @@ class ClaudeLLM(LLM):
                     "https://api.anthropic.com/v1/messages", 
                     headers=headers, 
                     json=body,
-                    timeout=30.0  # Adding explicit timeout
+                    timeout=30.0  # Adding explicit timeout (Added by AI)
                 )
                 response.raise_for_status()
                 
@@ -51,7 +54,8 @@ class ClaudeLLM(LLM):
                     raise ValueError(f"Failed to parse Claude response: {content}") from e
                 
                 return RiskAnalysis(**result)
-                
+            
+            #ai generated (to figure out why the api wasnt working)    
             except httpx.HTTPStatusError as e:
                 error_detail = None
                 try:
@@ -63,7 +67,7 @@ class ClaudeLLM(LLM):
 
     def _build_prompt(self, transaction: Transaction) -> str:
         transaction_json = transaction.model_dump_json(indent=2)
-        return f"""
+        return f""" (Update prompt)
 Analyze this financial transaction and respond ONLY with a valid JSON object containing:
 - risk_score: number between 0.0 and 1.0
 - risk_factors: array of strings

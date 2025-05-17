@@ -27,6 +27,6 @@ class Settings(BaseSettings):
     auth_username: str = "Testuser"
     auth_password: str = "Random321"
 
-    notifyadmin_api_url: str
+    notifyadmin_api_url: str = "https://api.notifyadmin.com/v1/notify"
 
 settings = Settings()

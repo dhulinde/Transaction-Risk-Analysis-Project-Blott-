@@ -4,9 +4,14 @@ import time
 from app.config import settings
 from app.llm.base import LLM
 from app.models import Transaction, RiskAnalysis
+import re
+
+#testing 
+import logging
+logger = logging.getLogger(__name__)
 
 class GroqLLM(LLM):
-    def __init__(self, model_name: str = "gemma2-9b-it"): #gemma-7b-it, llama3-70b-8192, deepseek-coder
+    def __init__(self, model_name: str = "deepseek-r1-distill-llama-70b"): #gemma-7b-it, gemma2-9b-it, llama3-70b-8192, deepseek-coder
         self.model_name = model_name
 
     async def analyze_transaction(self, transaction: Transaction) -> RiskAnalysis:
@@ -34,50 +39,70 @@ class GroqLLM(LLM):
         content = response_data['choices'][0]['message']['content']
         print(f"Groq [{self.model_name}] Response Time: {duration:.2f}s | Tokens: {response_data.get('usage', {}).get('total_tokens')}")
 
+        if content.strip().startswith("```"):
+            print("Detected Markdown formatting in LLM response. Stripping...")
+            content = re.sub(r"^```[a-z]*\n?", "", content.strip())
+            content = re.sub(r"\n?```$", "", content.strip())
+
         try:
-            result = json.loads(content)
+            #result = json.loads(content)
+            result = self._extract_json(content)
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON: {e}\nResponse: {content}")
             raise
 
         return RiskAnalysis(**result)
 
+    #ai generated to remove the <think> and <reasoning> tags
+    def _extract_json(self, raw: str) -> dict:
+        """
+        Clean and extract the first valid JSON object from the raw LLM response.
+        Handles markdown fences, <think> blocks, and extra text.
+        """
+        txt = raw.strip()
+
+        # Remove <think>...</think>
+        txt = re.sub(r'<think>.*?</think>', '', txt, flags=re.DOTALL | re.IGNORECASE)
+
+        # Remove markdown code fences
+        if txt.startswith("```"):
+            txt = re.sub(r'^```[a-zA-Z]*\s*', '', txt, count=1)
+            txt = re.sub(r'\s*```$', '', txt, count=1)
+
+        # Extract the first valid JSON object
+        match = re.search(r'\{.*\}', txt, flags=re.DOTALL)
+        if not match:
+            raise json.JSONDecodeError("No JSON object found in response", txt, 0)
+
+        return json.loads(match.group(0))
+
     def _build_prompt(self, transaction: Transaction) -> str:
         transaction_json = transaction.model_dump_json(indent=2)
         return f"""
-# Transaction Risk Analysis Prompt 
-## System Instructions 
-You are a specialised financial risk analyst. Your task is to evaluate 
-transaction data and determine a risk score from 0.0 (no risk) to 1.0 
-(extremely high risk) based on patterns and indicators of potential fraud. 
-You must also provide clear reasoning for your risk assessment. 
+You are a financial-fraud analyst.
 
-!!! IMPORTANT: Respond in valid JSON format only and only the json format given below.
-!!! Do not include any other text or explanations outside of the JSON response. 
-!!! Please give the reasoning and follow the format strictly.
-!!! Do NOT include Markdown formatting like ```json
-## Response Format  
-Respond in JSON format with the following structure: 
-{{  
-        "risk_score": 0.0-1.0, 
-        "risk_factors": ["factor1", "factor2"...], 
-        "reasoning": "A brief explanation of your analysis", 
-        "recommended_action": "allow|review|block"
+Return **only** this JSON, no markdown, no extra keys:
+Remove all markdown formatting. 
+Avoid using the word "JSON" in your response.
+Also dont include <think> or <reasoning> in your response.
+
+{{
+  "risk_score": 0.0-1.0,          // float
+  "risk_factors": ["…"],          // list of short strings
+  "reasoning": "…",               // ≤ 40 words
+  "recommended_action": "allow" | "review" | "block"
 }}
-## Risk Factors to Consider 
-1. **Geographic Anomalies**: - Transactions where the customer country differs from the payment 
-method country 
-- Transactions from high-risk countries (consider jurisdiction with 
-weak AML controls) - IP address location inconsistent with the customer's country 
-2. **Transaction Patterns**: - Unusual transaction amount for the merchant category - Transactions outside normal business hours for the merchant's 
-location - Multiple transactions in short succession 
-3. **Payment Method Indicators**: - Payment method type and associated risks - New payment methods have recently been added to accounts 
-4. **Merchant Factors**: - Merchant category and typical fraud rates - Merchant's history and reputation 
-## Additional Guidelines - Assign higher risk scores to combinations of multiple risk factors - Consider the transaction amount - higher amounts generally warrant more 
-scrutiny - Account for normal cross-border shopping patterns while flagging unusual 
-combinations - Provide actionable reasoning that explains why the transaction received 
-its risk score - Recommend "allow" for scores 0.0-0.3, "review" for scores 0.3-0.7, and 
-"block" for scores 0.7-1.0 
-## Transaction Data
+
+Assess risk using:
+• Geographic mismatch (customer ↔ card ↔ IP, high-risk country list)
+• Pattern anomalies (amount, time-of-day, velocity)
+• Payment-method risk
+• Merchant reputation / category
+
+Guidelines  
+0.0-0.3 → allow 0.3-0.7 → review 0.7-1.0 → block
+
+Transaction:
 {transaction_json}
+
 """
