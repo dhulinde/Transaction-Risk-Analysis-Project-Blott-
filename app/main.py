@@ -49,7 +49,10 @@ async def transaction_webhook(
     #add email notification to admin code here
 
     return {
-        "transaction_id": transaction.transaction_id,
         "risk_score": analysis.risk_score,
+        "risk_factors": analysis.risk_factors,
+        "reasoning": analysis.reasoning, 
         "recommended_action": analysis.recommended_action
     }
+
+
