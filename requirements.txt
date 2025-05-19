@@ -6,3 +6,9 @@ pydantic-settings
 pytest
 asyncio
 pytest-cov
+anyio
+pytest-asyncio
+pytest-tornasync
+pytest-trio
+pytest-twisted
+twisted

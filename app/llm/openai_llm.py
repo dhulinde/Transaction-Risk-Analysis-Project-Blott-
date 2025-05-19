@@ -62,7 +62,7 @@ class OpenAILLM(LLM):
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON: {e}")
             print(f"LLM Output: {content}")
-            raise
+            raise json.JSONDecodeError(f"Failed to decode JSON from LLM response: {content}") from e
 
         return RiskAnalysis(**result)
 
@@ -87,6 +87,14 @@ Assess risk using:
 • Merchant reputation / category
 
 Guidelines  
+HIGH_RISK_COUNTRIES = ['RU', 'IR', 'KP', 'VE', 'MM']
+Assign higher risk scores to combinations of multiple risk factors 
+Consider the transaction amount, higher amounts generally warrant more 
+scrutiny 
+Account for normal cross-border shopping patterns while flagging unusual 
+combinations 
+Provide actionable reasoning that explains why the transaction received 
+its risk score
 0.0-0.3 → allow 0.3-0.7 → review 0.7-1.0 → block
 
 Transaction:
