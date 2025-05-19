@@ -40,11 +40,15 @@ async def transaction_webhook(
         analysis: RiskAnalysis = await analyze_transaction(transaction, settings.llm_provider)
     except Exception as e:
         print(f"LLM analysis failed: {e}")
-        raise HTTPException(status_code=500, detail="LLM analysis failed")
+        raise HTTPException(status_code=500, detail="LLM analysis failed: " + str(e))
     
     #Nofifies admin api if theres a high risk score
     if analysis.risk_score >= 0.7:
-        await notify_api(transaction, analysis)
+        try:
+            await notify_api(transaction, analysis)
+        except Exception as e:
+            print(f"Error notifying admin API: {e}")
+            raise HTTPException(status_code=500, detail="Notification failed: " + str(e))
 
     #add email notification to admin code here
 

@@ -99,8 +99,11 @@ Assess risk using:
 • Payment-method risk
 • Merchant reputation / category
 
-Guidelines  
-0.0-0.3 → allow 0.3-0.7 → review 0.7-1.0 → block
+!!Guidelines  
+HIGH_RISK_COUNTRIES = ['RU', 'IR', 'KP', 'VE', 'MM']
+0.1 to 0.3 → allow 
+0.3 to 0.7 → review 
+0.7- to 1.0 → block
 
 Transaction:
 {transaction_json}
